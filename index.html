@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VOID Template Batch Renderer</title>
+  <style>
+    @font-face {
+      font-family: 'ImpactBundled';
+      src:
+        url('./fonts/impact.woff2') format('woff2'),
+        url('./fonts/impact.woff') format('woff'),
+        url('./fonts/impact.ttf') format('truetype');
+      font-style: normal;
+      font-weight: 400;
+      font-display: block;
+    }
+    :root {
+      --bg-top:#f8efd9;
+      --bg-mid:#f1e6ce;
+      --bg-bot:#fbf7ef;
+      --fg:#23180f;
+      --muted:#6d5f52;
+      --accent:#ffb700;
+      --accent-strong:#ef9b1a;
+      --card:#fff9efcc;
+      --card-solid:#fff9ef;
+      --bd:#d9c8ab;
+      --ink:#362314;
+      --danger:#8d3020;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin:0;
+      font-family: "Avenir Next", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      color:var(--fg);
+      background:
+        radial-gradient(circle at 8% -5%, #ffe8af 0, transparent 34%),
+        radial-gradient(circle at 90% 0%, #cde7f7 0, transparent 38%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 40%, var(--bg-bot) 100%);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 18px 16px 28px; display: grid; gap: 14px; }
+    .card {
+      background:var(--card);
+      border:1px solid var(--bd);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 18px 30px rgba(66, 45, 21, 0.07);
+      backdrop-filter: blur(4px);
+      animation: riseIn .36s ease both;
+    }
+    .card:nth-of-type(2) { animation-delay: .04s; }
+    .card:nth-of-type(3) { animation-delay: .08s; }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .heroTop { display:flex; gap:14px; flex-wrap: wrap; align-items:center; justify-content: space-between; }
+    .brand {
+      font-family: ImpactBundled, "Arial Black", "Impact", sans-serif;
+      letter-spacing: .8px;
+      font-size: 30px;
+      line-height: .95;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+    .heroActions { display:flex; gap:10px; flex-wrap: wrap; }
+    .sectionHead { display:grid; gap:4px; margin-bottom: 12px; }
+    .sectionKicker {
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .sectionTitle { font-size: 20px; font-weight: 800; color: var(--ink); }
+    .stepRail {
+      display:grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .stepPill {
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border:1px solid var(--bd);
+      border-radius: 999px;
+      background: #fff5e6;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      transition: .2s ease;
+    }
+    .stepNo {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      display:inline-grid;
+      place-items:center;
+      font-size: 11px;
+      line-height: 1;
+      border:1px solid currentColor;
+    }
+    .stepPill[data-state="active"] {
+      background: linear-gradient(90deg, #ffe9ad, #ffd26e);
+      color: #41270d;
+      border-color: #e9b357;
+    }
+    .stepPill[data-state="done"] {
+      background: #ecf8e6;
+      color: #27562e;
+      border-color: #95c998;
+    }
+    .stepPill[data-state="locked"] {
+      background: #f1eadf;
+      color: #9e907f;
+      border-color: #d8cab8;
+    }
+    .workflowNote {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border:1px dashed #d2b98f;
+      background: #fff7e6;
+      color: #5f4a31;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .row { display:flex; gap:12px; flex-wrap: wrap; align-items: flex-end; }
+    label { font-size: 12px; color: var(--muted); display:block; margin-bottom:6px; font-weight: 600; }
+    input[type="text"], textarea {
+      width: 360px; max-width: 100%;
+      background:#fffcf7; color:var(--fg);
+      border:1px solid #d8cbb7; border-radius: 12px;
+      padding: 10px 12px; font-size: 14px; outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    input[type="text"]:focus, textarea:focus { border-color:#e0aa57; box-shadow: 0 0 0 3px rgba(255,183,0,.2); }
+    textarea { height: 72px; resize: vertical; }
+    #labelText { text-transform: uppercase; letter-spacing: .3px; }
+    input[type="file"] { color: var(--muted); max-width: 360px; }
+    input[type="range"] { width: 240px; accent-color: #d48f17; }
+    button {
+      background:#fff8ec; color:var(--ink);
+      border:1px solid #d9c8ad; border-radius: 11px;
+      padding: 10px 12px; cursor:pointer; font-weight: 760;
+      user-select: none;
+      transition: .18s ease;
+    }
+    button:hover:enabled { transform: translateY(-1px); border-color: #caa577; background:#fffdf6; }
+    button.primary { background:linear-gradient(120deg, #ffd66f, #ffbf3f); border-color:#dba24a; }
+    button.danger { background:#fff0ed; border-color:#e1b3ad; color: var(--danger); }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    .small { font-size: 12px; color: var(--muted); line-height: 1.35; }
+    .pill {
+      display:inline-block;
+      padding:2px 8px;
+      border:1px solid #dfccb1;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #70583a;
+      background: #fff9ea;
+    }
+    .grid {
+      display:grid;
+      grid-template-columns: 1fr 350px;
+      gap: 14px;
+      align-items: start;
+    }
+    .canvasWrap { display:grid; gap:10px; }
+    canvas {
+      width: 100%;
+      height: auto;
+      background:#070707;
+      border-radius: 12px;
+      border:1px solid #bfa47f;
+      touch-action: none;
+      box-shadow: 0 8px 20px rgba(32, 20, 8, 0.2);
+    }
+    .queuePanel { display:grid; gap:10px; background:var(--card-solid); }
+    .queueHeader { display:flex; align-items:center; justify-content: space-between; gap: 10px; }
+    .queueList { display:grid; gap: 10px; max-height: 62vh; overflow: auto; padding-right: 2px; }
+    .qItem {
+      display:grid;
+      grid-template-columns: 72px 1fr;
+      gap: 10px;
+      padding: 10px;
+      border:1px solid #dcc9ad;
+      border-radius: 12px;
+      background:#fffdf8;
+    }
+    .thumb {
+      width: 72px; height: 72px;
+      border-radius: 10px;
+      border:1px solid #d9c8ae;
+      object-fit: cover;
+      background:#000;
+      display:block;
+    }
+    .qMeta { display:grid; gap: 8px; }
+    .qTitle { font-size: 13px; font-weight: 800; line-height: 1.2; color: var(--ink); }
+    .qSub { font-size: 12px; color: var(--muted); line-height: 1.25; }
+    .qActions { display:flex; gap: 8px; flex-wrap: wrap; }
+    code { color:#7f5600; }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .stepRail { grid-template-columns: 1fr 1fr; }
+      .heroActions { width: 100%; }
+      .heroActions button { flex: 1 1 160px; }
+      .brand { font-size: 24px; }
+      .queueList { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="heroTop">
+        <div>
+          <div class="brand">VOID Template Batch Renderer</div>
+          <div class="small" style="margin-top:7px;">
+            Output: <span class="pill">1080 × 1350</span>
+            Text: <span class="pill">Impact</span> <span class="pill">ALL CAPS</span> <span class="pill">#FFB700</span>
+            Template file: <span class="pill">VOID_IG_TEMPLATE.png</span>
+          </div>
+        </div>
+        <div class="heroActions">
+          <button id="savePhotosBtn" disabled>Save to Photos</button>
+          <button id="exportZipBtn" class="primary" disabled>Export ZIP</button>
+        </div>
+      </div>
+      <div class="stepRail">
+        <div id="stepLoad" class="stepPill" data-state="active"><span class="stepNo">1</span>Load</div>
+        <div id="stepCompose" class="stepPill" data-state="locked"><span class="stepNo">2</span>Compose</div>
+        <div id="stepQueue" class="stepPill" data-state="locked"><span class="stepNo">3</span>Queue</div>
+        <div id="stepExport" class="stepPill" data-state="locked"><span class="stepNo">4</span>Save</div>
+      </div>
+      <div id="flowHint" class="workflowNote">Step 1: Load one or more images to start your batch.</div>
+    </div>
+
+    <div class="card">
+      <div class="sectionHead">
+        <div class="sectionKicker">Step 1</div>
+        <div class="sectionTitle">Load Images and Set Navigation</div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Batch images</label>
+          <input id="images" type="file" accept="image/*" multiple />
+          <div class="small">Pick all source photos. Use Prev/Next to move through the set.</div>
+        </div>
+
+        <div style="flex:1"></div>
+
+        <div>
+          <label>Font</label>
+          <div class="small">Uses bundled Impact font from <code>fonts/impact.ttf</code> (or woff/woff2).</div>
+        </div>
+
+        <div class="row">
+          <button id="prevBtn" disabled>Prev</button>
+          <button id="nextBtn" disabled>Next</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="sectionHead">
+          <div class="sectionKicker">Step 2</div>
+          <div class="sectionTitle">Compose and Queue</div>
+        </div>
+        <div class="row" style="align-items:flex-start;">
+          <div style="min-width: 280px;">
+            <label>Current image</label>
+            <div id="currentLabel" class="small">None loaded</div>
+          </div>
+
+          <div>
+            <label>Text (newline = 2 lines)</label>
+            <textarea id="labelText" placeholder="SWITCHBLADE&#10;TATTOO CLUB"></textarea>
+          </div>
+
+          <div>
+            <label>Zoom</label>
+            <input id="zoom" type="range" min="0.5" max="3.0" value="1.0" step="0.01" />
+            <div class="small">Drag image inside frame to position.</div>
+          </div>
+
+          <div>
+            <label>Text size</label>
+            <input id="textSize" type="range" min="48" max="180" value="118" step="1" />
+            <div class="small"><span id="textSizeVal">118</span> px</div>
+          </div>
+
+          <div class="row">
+            <button id="queueBtn" class="primary" disabled>Add to queue (auto-next)</button>
+          </div>
+        </div>
+
+        <div class="canvasWrap" style="margin-top:12px;">
+          <canvas id="preview" width="1080" height="1350"></canvas>
+          <div class="small">Preview matches export exactly (1080×1350). Reposition by dragging inside the image window.</div>
+          <div class="small" id="status"></div>
+        </div>
+      </div>
+
+      <div class="card queuePanel">
+        <div class="sectionHead">
+          <div class="sectionKicker">Step 3 / 4</div>
+          <div class="sectionTitle">Review Queue and Save</div>
+        </div>
+        <div class="queueHeader">
+          <div class="small">Queue: <span id="queueCount" class="pill">0</span></div>
+          <div class="row" style="gap:8px;">
+            <button id="clearQueueBtn" class="danger" disabled>Clear</button>
+          </div>
+        </div>
+        <div id="queueList" class="queueList"></div>
+        <div class="small">Edit reopens that queued item’s settings. Remove deletes it from the ZIP.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JSZip + FileSaver -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+  <script>
+    // Fixed export size (recommended)
+    const EXPORT_W = 1080;
+    const EXPORT_H = 1350;
+
+    // Template is 1638x2048 (native). Export keeps same aspect ratio.
+    const TEMPLATE_SRC = 'VOID_IG_TEMPLATE.png';
+    const SCALE = EXPORT_W / 1638;
+
+    // Frame bbox in native template coords (from your template)
+    const FRAME_NATIVE = { x: 399, y: 466, w: (1242-399+1), h: (1364-466+1) };
+    const BAR_NATIVE_Y = 1441;
+
+    const FRAME = {
+      x: FRAME_NATIVE.x * SCALE,
+      y: FRAME_NATIVE.y * SCALE,
+      w: FRAME_NATIVE.w * SCALE,
+      h: FRAME_NATIVE.h * SCALE
+    };
+
+    const BAR = {
+      y: BAR_NATIVE_Y * SCALE,
+      h: EXPORT_H - (BAR_NATIVE_Y * SCALE)
+    };
+
+    const state = {
+      templateImg: null,
+
+      // source images (files)
+      images: [],
+      currentIndex: -1,
+      currentImgEl: null,
+
+      // current edit settings
+      offsetX: 0,
+      offsetY: 0,
+      scale: 1,
+
+      dragging: false,
+      dragStart: null,
+
+      // bundled Impact font
+      impactFontReady: false,
+
+      // queue items: { id, sourceIndex, sourceName, sourceThumbUrl, imgEl, settings, filename, blob, text }
+      queue: [],
+      nextId: 1
+    };
+
+    const el = (id) => document.getElementById(id);
+
+    const preview = el('preview');
+    const ctx = preview.getContext('2d');
+
+    const imagesInput = el('images');
+    const prevBtn = el('prevBtn');
+    const nextBtn = el('nextBtn');
+    const queueBtn = el('queueBtn');
+    const savePhotosBtn = el('savePhotosBtn');
+    const exportZipBtn = el('exportZipBtn');
+    const clearQueueBtn = el('clearQueueBtn');
+
+    const zoomInput = el('zoom');
+    const labelText = el('labelText');
+    const textSize = el('textSize');
+    const textSizeVal = el('textSizeVal');
+
+    const currentLabelEl = el('currentLabel');
+    const statusEl = el('status');
+    const queueCountEl = el('queueCount');
+    const queueListEl = el('queueList');
+    const flowHintEl = el('flowHint');
+    const stepLoadEl = el('stepLoad');
+    const stepComposeEl = el('stepCompose');
+    const stepQueueEl = el('stepQueue');
+    const stepExportEl = el('stepExport');
+
+    function setStatus(msg) { statusEl.textContent = msg || ''; }
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+    function setStepState(stepEl, stateName) {
+      if (!stepEl) return;
+      stepEl.dataset.state = stateName;
+    }
+    function setFlowHint(msg) {
+      if (!flowHintEl) return;
+      flowHintEl.textContent = msg;
+    }
+
+    function getFontFamily() {
+      return 'ImpactBundled';
+    }
+
+    async function ensureImpactFontLoaded() {
+      try {
+        await document.fonts.load(`120px ${getFontFamily()}`);
+        state.impactFontReady = document.fonts.check(`120px ${getFontFamily()}`);
+        return state.impactFontReady;
+      } catch {
+        state.impactFontReady = false;
+        return false;
+      }
+    }
+
+    function requireImpactFontLoaded() {
+      if (!state.impactFontReady) {
+        state.impactFontReady = document.fonts.check(`120px ${getFontFamily()}`);
+      }
+      if (state.impactFontReady) return;
+      throw new Error('Impact font not loaded. Add licensed font at fonts/impact.ttf (or .woff2/.woff).');
+    }
+
+    function queueItemToFile(item) {
+      return new File([item.blob], item.filename, { type: 'image/png' });
+    }
+
+    function canShareFiles(files) {
+      if (!navigator.share || !navigator.canShare) return false;
+      try {
+        return navigator.canShare({ files });
+      } catch {
+        return false;
+      }
+    }
+
+    function defaultCoverScale(img) {
+      // cover the frame (like background-size: cover)
+      const sx = FRAME.w / img.naturalWidth;
+      const sy = FRAME.h / img.naturalHeight;
+      return Math.max(sx, sy);
+    }
+
+    async function loadTemplate() {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Failed to load template image. Ensure VOID_IG_TEMPLATE.png is next to index.html'));
+        img.src = TEMPLATE_SRC;
+      });
+    }
+
+    async function loadFileImage(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image: ' + file.name)); };
+        img.src = url;
+      });
+    }
+
+    function renderWithSettings(imgEl, settings, text, fontPx) {
+      // settings: {offsetX, offsetY, scale, textSize}
+      ctx.clearRect(0, 0, EXPORT_W, EXPORT_H);
+
+      // template
+      ctx.drawImage(state.templateImg, 0, 0, EXPORT_W, EXPORT_H);
+
+      if (imgEl) {
+        // clip to frame and draw image
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(FRAME.x, FRAME.y, FRAME.w, FRAME.h);
+        ctx.clip();
+
+        const base = defaultCoverScale(imgEl);
+        const finalScale = base * settings.scale;
+
+        const drawW = imgEl.naturalWidth * finalScale;
+        const drawH = imgEl.naturalHeight * finalScale;
+
+        const frameCx = FRAME.x + FRAME.w / 2;
+        const frameCy = FRAME.y + FRAME.h / 2;
+
+        const x = frameCx - (drawW / 2) + settings.offsetX;
+        const y = frameCy - (drawH / 2) + settings.offsetY;
+
+        ctx.drawImage(imgEl, x, y, drawW, drawH);
+        ctx.restore();
+
+        // template on top to keep border edges clean
+        ctx.drawImage(state.templateImg, 0, 0, EXPORT_W, EXPORT_H);
+      }
+
+      // label
+      const raw = (text || '').trim();
+      if (raw) {
+        if (!state.impactFontReady) return;
+        const linesRaw = raw.split('\n').map(s => s.trim()).filter(Boolean);
+        const lines = linesRaw.map(s => s.toUpperCase());
+
+        const size = fontPx ?? settings.textSize;
+        const gap = size * 0.18;
+
+        ctx.save();
+        ctx.fillStyle = '#FFB700';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${size}px ${getFontFamily()}`;
+
+        const cx = EXPORT_W / 2;
+        const cy = BAR.y + (BAR.h / 2);
+
+        if (lines.length === 1) {
+          ctx.fillText(lines[0], cx, cy);
+        } else {
+          const totalH = (lines.length * size) + ((lines.length - 1) * gap);
+          let y = cy - (totalH / 2) + (size / 2);
+          for (const ln of lines) {
+            ctx.fillText(ln, cx, y);
+            y += size + gap;
+          }
+        }
+        ctx.restore();
+      }
+    }
+
+    function renderPreview() {
+      if (!state.templateImg) return;
+      const settings = {
+        offsetX: state.offsetX,
+        offsetY: state.offsetY,
+        scale: state.scale,
+        textSize: parseInt(textSize.value, 10)
+      };
+      renderWithSettings(state.currentImgEl, settings, labelText.value);
+    }
+
+    function updateUI() {
+      if (!state.impactFontReady) {
+        state.impactFontReady = document.fonts.check(`120px ${getFontFamily()}`);
+      }
+      const hasImages = state.images.length > 0;
+      const hasCurrent = !!state.currentImgEl;
+      const hasQueue = state.queue.length > 0;
+      prevBtn.disabled = !(hasImages && state.currentIndex > 0);
+      nextBtn.disabled = !(hasImages && state.currentIndex < state.images.length - 1);
+      queueBtn.disabled = !(hasCurrent && state.impactFontReady);
+      savePhotosBtn.disabled = !hasQueue;
+
+      exportZipBtn.disabled = !hasQueue;
+      clearQueueBtn.disabled = !hasQueue;
+      queueBtn.textContent = state._editingId ? 'Update queued item' : 'Add to queue (auto-next)';
+
+      if (!hasImages) currentLabelEl.textContent = 'None loaded';
+      else currentLabelEl.textContent = `${state.currentIndex + 1}/${state.images.length}: ${state.images[state.currentIndex].name}`;
+
+      queueCountEl.textContent = String(state.queue.length);
+      textSizeVal.textContent = textSize.value;
+
+      if (!hasImages) {
+        setStepState(stepLoadEl, 'active');
+        setStepState(stepComposeEl, 'locked');
+        setStepState(stepQueueEl, 'locked');
+        setStepState(stepExportEl, 'locked');
+      } else {
+        setStepState(stepLoadEl, 'done');
+        setStepState(stepComposeEl, 'active');
+        setStepState(stepQueueEl, hasQueue ? 'done' : 'active');
+        setStepState(stepExportEl, hasQueue ? 'active' : 'locked');
+      }
+
+      if (!state.impactFontReady) {
+        setFlowHint('Add licensed Impact at fonts/impact.ttf first, then reload.');
+      } else if (!hasImages) {
+        setFlowHint('Step 1: Load one or more images to start your batch.');
+      } else if (state._editingId) {
+        setFlowHint('Editing an existing queued card. Click Update queued item when ready.');
+      } else if (!hasQueue) {
+        setFlowHint('Step 2: Position image, write all-caps text, then Add to queue.');
+      } else {
+        setFlowHint(`${state.queue.length} item${state.queue.length === 1 ? '' : 's'} ready. Step 4: Save to Photos or export ZIP.`);
+      }
+
+      renderQueueList();
+    }
+
+    async function setCurrentIndex(i) {
+      state.currentIndex = i;
+      setStatus('Loading image…');
+      const file = state.images[i];
+      state.currentImgEl = await loadFileImage(file);
+
+      // reset transform
+      state.offsetX = 0;
+      state.offsetY = 0;
+      state.scale = 1;
+      zoomInput.value = '1.0';
+
+      setStatus('');
+      updateUI();
+      renderPreview();
+    }
+
+    function slugify(s) {
+      return (s || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[\n\r\t]+/g, ' ')
+        .replace(/[^a-z0-9]+/g,'-')
+        .replace(/(^-|-$)/g,'')
+        .slice(0, 80) || 'output';
+    }
+
+    async function makeThumbBlob(imgEl, settings, text) {
+      requireImpactFontLoaded();
+      const c = document.createElement('canvas');
+      c.width = 360;
+      c.height = 450;
+      const cctx = c.getContext('2d');
+
+      // draw full export to offscreen then scale down for thumb
+      const full = document.createElement('canvas');
+      full.width = EXPORT_W;
+      full.height = EXPORT_H;
+      const fctx = full.getContext('2d');
+
+      // render to fctx
+      fctx.drawImage(state.templateImg, 0, 0, EXPORT_W, EXPORT_H);
+
+      fctx.save();
+      fctx.beginPath();
+      fctx.rect(FRAME.x, FRAME.y, FRAME.w, FRAME.h);
+      fctx.clip();
+
+      const base = defaultCoverScale(imgEl);
+      const finalScale = base * settings.scale;
+
+      const drawW = imgEl.naturalWidth * finalScale;
+      const drawH = imgEl.naturalHeight * finalScale;
+
+      const frameCx = FRAME.x + FRAME.w / 2;
+      const frameCy = FRAME.y + FRAME.h / 2;
+
+      const x = frameCx - (drawW / 2) + settings.offsetX;
+      const y = frameCy - (drawH / 2) + settings.offsetY;
+
+      fctx.drawImage(imgEl, x, y, drawW, drawH);
+      fctx.restore();
+
+      fctx.drawImage(state.templateImg, 0, 0, EXPORT_W, EXPORT_H);
+
+      // label (scaled down)
+      const raw = (text || '').trim();
+      if (raw) {
+        const linesRaw = raw.split('\n').map(s => s.trim()).filter(Boolean);
+        const lines = linesRaw.map(s => s.toUpperCase());
+
+        // thumb uses proportional size
+        const size = settings.textSize;
+        const gap = size * 0.18;
+
+        fctx.save();
+        fctx.fillStyle = '#FFB700';
+        fctx.textAlign = 'center';
+        fctx.textBaseline = 'middle';
+        fctx.font = `${size}px ${getFontFamily()}`;
+
+        const cx = EXPORT_W / 2;
+        const cy = BAR.y + (BAR.h / 2);
+
+        if (lines.length === 1) {
+          fctx.fillText(lines[0], cx, cy);
+        } else {
+          const totalH = (lines.length * size) + ((lines.length - 1) * gap);
+          let yy = cy - (totalH / 2) + (size / 2);
+          for (const ln of lines) {
+            fctx.fillText(ln, cx, yy);
+            yy += size + gap;
+          }
+        }
+        fctx.restore();
+      }
+
+      // scale to thumb
+      cctx.drawImage(full, 0, 0, c.width, c.height);
+
+      const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.88));
+      return blob;
+    }
+
+    async function renderExportBlob(imgEl, settings, text) {
+      requireImpactFontLoaded();
+      const c = document.createElement('canvas');
+      c.width = EXPORT_W;
+      c.height = EXPORT_H;
+      const cctx = c.getContext('2d');
+
+      // template
+      cctx.drawImage(state.templateImg, 0, 0, EXPORT_W, EXPORT_H);
+
+      // clipped image
+      cctx.save();
+      cctx.beginPath();
+      cctx.rect(FRAME.x, FRAME.y, FRAME.w, FRAME.h);
+      cctx.clip();
+
+      const base = defaultCoverScale(imgEl);
+      const finalScale = base * settings.scale;
+
+      const drawW = imgEl.naturalWidth * finalScale;
+      const drawH = imgEl.naturalHeight * finalScale;
+
+      const frameCx = FRAME.x + FRAME.w / 2;
+      const frameCy = FRAME.y + FRAME.h / 2;
+
+      const x = frameCx - (drawW / 2) + settings.offsetX;
+      const y = frameCy - (drawH / 2) + settings.offsetY;
+
+      cctx.drawImage(imgEl, x, y, drawW, drawH);
+      cctx.restore();
+
+      // template on top
+      cctx.drawImage(state.templateImg, 0, 0, EXPORT_W, EXPORT_H);
+
+      // label
+      const raw = (text || '').trim();
+      if (raw) {
+        const linesRaw = raw.split('\n').map(s => s.trim()).filter(Boolean);
+        const lines = linesRaw.map(s => s.toUpperCase());
+
+        const size = settings.textSize;
+        const gap = size * 0.18;
+
+        cctx.save();
+        cctx.fillStyle = '#FFB700';
+        cctx.textAlign = 'center';
+        cctx.textBaseline = 'middle';
+        cctx.font = `${size}px ${getFontFamily()}`;
+
+        const cx = EXPORT_W / 2;
+        const cy = BAR.y + (BAR.h / 2);
+
+        if (lines.length === 1) {
+          cctx.fillText(lines[0], cx, cy);
+        } else {
+          const totalH = (lines.length * size) + ((lines.length - 1) * gap);
+          let yy = cy - (totalH / 2) + (size / 2);
+          for (const ln of lines) {
+            cctx.fillText(ln, cx, yy);
+            yy += size + gap;
+          }
+        }
+        cctx.restore();
+      }
+
+      const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+      return blob;
+    }
+
+    function renderQueueList() {
+      queueListEl.innerHTML = '';
+
+      if (state.queue.length === 0) {
+        const d = document.createElement('div');
+        d.className = 'small';
+        d.textContent = 'No queued items yet.';
+        queueListEl.appendChild(d);
+        return;
+      }
+
+      for (const item of state.queue) {
+        const wrap = document.createElement('div');
+        wrap.className = 'qItem';
+
+        const img = document.createElement('img');
+        img.className = 'thumb';
+        img.src = item.thumbUrl;
+        img.alt = item.textOneLine || item.filename;
+
+        const meta = document.createElement('div');
+        meta.className = 'qMeta';
+
+        const title = document.createElement('div');
+        title.className = 'qTitle';
+        title.textContent = item.textOneLine || '(no text)';
+
+        const sub = document.createElement('div');
+        sub.className = 'qSub';
+        sub.textContent = `${item.filename} • source: ${item.sourceName}`;
+
+        const actions = document.createElement('div');
+        actions.className = 'qActions';
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.addEventListener('click', async () => {
+          // Load that item into editor without removing it
+          state.currentIndex = item.sourceIndex;
+          state.currentImgEl = item.imgEl;
+
+          state.offsetX = item.settings.offsetX;
+          state.offsetY = item.settings.offsetY;
+          state.scale = item.settings.scale;
+
+          zoomInput.value = String(state.scale);
+          textSize.value = String(item.settings.textSize);
+          labelText.value = item.text;
+
+          // mark as "editing existing"
+          state._editingId = item.id;
+
+          setStatus(`Editing queued item: ${item.filename}`);
+          updateUI();
+          renderPreview();
+        });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Remove';
+        removeBtn.className = 'danger';
+        removeBtn.addEventListener('click', () => {
+          // revoke thumb url
+          try { URL.revokeObjectURL(item.thumbUrl); } catch {}
+          state.queue = state.queue.filter(q => q.id !== item.id);
+          if (state._editingId === item.id) {
+            state._editingId = null;
+            setStatus('');
+          }
+          updateUI();
+        });
+
+        actions.appendChild(editBtn);
+        actions.appendChild(removeBtn);
+
+        meta.appendChild(title);
+        meta.appendChild(sub);
+        meta.appendChild(actions);
+
+        wrap.appendChild(img);
+        wrap.appendChild(meta);
+        queueListEl.appendChild(wrap);
+      }
+    }
+
+    function pointerPos(evt) {
+      const rect = preview.getBoundingClientRect();
+      const x = (evt.clientX - rect.left) * (preview.width / rect.width);
+      const y = (evt.clientY - rect.top) * (preview.height / rect.height);
+      return { x, y };
+    }
+
+    function isInFrame(pos) {
+      return pos.x >= FRAME.x && pos.x <= FRAME.x + FRAME.w && pos.y >= FRAME.y && pos.y <= FRAME.y + FRAME.h;
+    }
+
+    // Events
+    textSize.addEventListener('input', () => {
+      textSizeVal.textContent = textSize.value;
+      renderPreview();
+    });
+    zoomInput.addEventListener('input', () => {
+      state.scale = parseFloat(zoomInput.value);
+      renderPreview();
+    });
+    labelText.addEventListener('input', renderPreview);
+
+    preview.addEventListener('pointerdown', (e) => {
+      if (!state.currentImgEl) return;
+      const p = pointerPos(e);
+      if (!isInFrame(p)) return;
+      state.dragging = true;
+      state.dragStart = { x: p.x, y: p.y, ox: state.offsetX, oy: state.offsetY };
+      preview.setPointerCapture(e.pointerId);
+    });
+
+    preview.addEventListener('pointermove', (e) => {
+      if (!state.dragging || !state.dragStart) return;
+      const p = pointerPos(e);
+      const dx = p.x - state.dragStart.x;
+      const dy = p.y - state.dragStart.y;
+      state.offsetX = state.dragStart.ox + dx;
+      state.offsetY = state.dragStart.oy + dy;
+      renderPreview();
+    });
+
+    preview.addEventListener('pointerup', (e) => {
+      state.dragging = false;
+      state.dragStart = null;
+      try { preview.releasePointerCapture(e.pointerId); } catch {}
+    });
+
+    prevBtn.addEventListener('click', async () => {
+      if (state.currentIndex > 0) {
+        state._editingId = null;
+        setStatus('');
+        await setCurrentIndex(state.currentIndex - 1);
+      }
+    });
+
+    nextBtn.addEventListener('click', async () => {
+      if (state.currentIndex < state.images.length - 1) {
+        state._editingId = null;
+        setStatus('');
+        await setCurrentIndex(state.currentIndex + 1);
+      }
+    });
+
+    imagesInput.addEventListener('change', async (e) => {
+      try {
+        if (!state.templateImg) state.templateImg = await loadTemplate();
+
+        const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('image/'));
+        state.images = files;
+        state.queue.forEach(q => { try { URL.revokeObjectURL(q.thumbUrl); } catch {} });
+        state.queue = [];
+        state._editingId = null;
+
+        labelText.value = '';
+        zoomInput.value = '1.0';
+        textSize.value = '118';
+        textSizeVal.textContent = '118';
+
+        if (files.length) {
+          await setCurrentIndex(0);
+        } else {
+          state.currentIndex = -1;
+          state.currentImgEl = null;
+          currentLabelEl.textContent = 'None loaded';
+          renderPreview();
+        }
+
+        updateUI();
+      } catch (err) {
+        setStatus(err.message);
+      }
+    });
+
+    queueBtn.addEventListener('click', async () => {
+      if (!state.currentImgEl) return;
+
+      const text = labelText.value || '';
+      const settings = {
+        offsetX: state.offsetX,
+        offsetY: state.offsetY,
+        scale: state.scale,
+        textSize: parseInt(textSize.value, 10)
+      };
+
+      // If editing an existing queued item, update it in place.
+      const editingId = state._editingId || null;
+
+      try {
+        requireImpactFontLoaded();
+        setStatus(editingId ? 'Updating queued item…' : 'Queueing…');
+
+        const blob = await renderExportBlob(state.currentImgEl, settings, text);
+
+        const firstLine = (text || '').split('\n')[0].trim();
+        const baseName = slugify(firstLine || state.images[state.currentIndex].name);
+        const filename = `${String(state.currentIndex + 1).padStart(2,'0')}-${baseName}.png`;
+
+        // thumb
+        const thumbBlob = await makeThumbBlob(state.currentImgEl, settings, text);
+        const thumbUrl = URL.createObjectURL(thumbBlob);
+
+        if (editingId) {
+          const idx = state.queue.findIndex(q => q.id === editingId);
+          if (idx !== -1) {
+            // revoke old thumb
+            try { URL.revokeObjectURL(state.queue[idx].thumbUrl); } catch {}
+            state.queue[idx] = {
+              ...state.queue[idx],
+              sourceIndex: state.currentIndex,
+              sourceName: state.images[state.currentIndex]?.name || state.queue[idx].sourceName,
+              imgEl: state.currentImgEl,
+              settings,
+              text,
+              textOneLine: firstLine.toUpperCase(),
+              filename,
+              blob,
+              thumbUrl
+            };
+          }
+          state._editingId = null;
+          setStatus('Updated. Auto-advancing…');
+        } else {
+          state.queue.push({
+            id: state.nextId++,
+            sourceIndex: state.currentIndex,
+            sourceName: state.images[state.currentIndex].name,
+            imgEl: state.currentImgEl,
+            settings,
+            text,
+            textOneLine: firstLine.toUpperCase(),
+            filename,
+            blob,
+            thumbUrl
+          });
+          setStatus('Queued. Auto-advancing…');
+        }
+
+        updateUI();
+        setTimeout(() => setStatus(''), 700);
+
+        // Auto-advance to next image if possible
+        if (state.images.length && state.currentIndex < state.images.length - 1) {
+          await setCurrentIndex(state.currentIndex + 1);
+        } else {
+          // stay on last, but keep preview
+          renderPreview();
+        }
+      } catch (err) {
+        setStatus(err?.message || 'Failed to render this item.');
+      }
+    });
+
+    exportZipBtn.addEventListener('click', async () => {
+      if (state.queue.length === 0) return;
+
+      setStatus('Building ZIP…');
+      const zip = new JSZip();
+
+      // keep deterministic order: by queue order
+      for (const item of state.queue) {
+        zip.file(item.filename, item.blob);
+      }
+
+      const out = await zip.generateAsync({ type: 'blob' });
+      saveAs(out, 'void-exports.zip');
+      setStatus('');
+    });
+
+    savePhotosBtn.addEventListener('click', async () => {
+      if (state.queue.length === 0) return;
+
+      try {
+        const allFiles = state.queue.map(queueItemToFile);
+        if (canShareFiles(allFiles)) {
+          setStatus('Opening share sheet… Choose Save Image/Add to Photos.');
+          await navigator.share({ files: allFiles, title: 'VOID exports' });
+          setStatus('Share complete.');
+          setTimeout(() => setStatus(''), 1200);
+          return;
+        }
+
+        // Some browsers only allow one file at a time.
+        if (navigator.share) {
+          const shareable = state.queue.filter(item => canShareFiles([queueItemToFile(item)]));
+          if (shareable.length > 0) {
+            setStatus('Sharing one image at a time… Use Save Image/Add to Photos for each one.');
+            for (const item of shareable) {
+              const file = queueItemToFile(item);
+              await navigator.share({ files: [file], title: item.filename });
+              await delay(120);
+            }
+            setStatus('All share sheets shown.');
+            setTimeout(() => setStatus(''), 1200);
+            return;
+          }
+        }
+
+        // Fallback: download PNG files.
+        setStatus('File sharing is not supported here. Downloading PNG files instead.');
+        for (const item of state.queue) {
+          const url = URL.createObjectURL(item.blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = item.filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          await delay(80);
+        }
+        setStatus('Download complete.');
+        setTimeout(() => setStatus(''), 1200);
+      } catch (err) {
+        if (err?.name === 'AbortError') {
+          setStatus('Share canceled.');
+          setTimeout(() => setStatus(''), 1200);
+          return;
+        }
+        setStatus('Could not share images. Use Export ZIP as fallback.');
+      }
+    });
+
+    clearQueueBtn.addEventListener('click', () => {
+      state.queue.forEach(q => { try { URL.revokeObjectURL(q.thumbUrl); } catch {} });
+      state.queue = [];
+      state._editingId = null;
+      setStatus('');
+      updateUI();
+    });
+
+    // Init
+    (async function init() {
+      try {
+        const impactReady = await ensureImpactFontLoaded();
+        state.templateImg = await loadTemplate();
+        renderPreview();
+        updateUI();
+        if (!impactReady) {
+          setStatus('Impact font missing. Add licensed font at fonts/impact.ttf (or .woff2/.woff).');
+        }
+      } catch (err) {
+        setStatus(err.message);
+      }
+    })();
+  </script>
+</body>
+</html>
